@@ -2,7 +2,7 @@
 
 This repository is for the code written by the Hernandez Research Group. 
 Our research project is to create a machine learning algorithm that can 
-predict the magnetic field acitng on an Ising model based solely on the 
+predict the magnetic field acting on an Ising model based solely on the 
 cooling history of this Ising model. 
 
 As of right now, we have a functional and well optimized method for 
