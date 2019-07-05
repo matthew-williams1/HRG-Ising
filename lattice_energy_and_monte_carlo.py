@@ -33,24 +33,26 @@ class Lattice(object):
 
         return -(np.sum(lattice * (upshift + downshift + leftshift + rightshift))) / 2
 
+    def chonkEnergy(self, i, j):
+        '''Calculates the energy of a small chunk'''
+        return self._matrixRepresentation[i][j] * (self._matrixRepresentation[(i-1) % self._width][j % self._width]
+                                                   + self._matrixRepresentation[(i+1) % self._width][j % self._width]
+                                                   + self._matrixRepresentation[i % self._width][(j-1) % self._width]
+                                                   + self._matrixRepresentation[i % self._width][(j+1) % self._width])
+
     def monteCarlo(self, steps):
         '''Performs Monte Carlo algorithm'''
 
         for x in range(steps):
-            i = random.randint(0,self._width-1)
+            i = random.randint(0, self._width-1)
             j = random.randint(0, self._height-1)
 
- #           for m in range(i-1, i+2):
-  #              for n in range(j-1, j+2):
-
-            energy1 = self.energyCalculation(self._matrixRepresentation)
+            energy1 = self.chonkEnergy(i, j)
             self._matrixRepresentation[i % self._width][j % self._height] *= -1
-            energy2 = self.energyCalculation(self._matrixRepresentation)
+            energy2 = self.chonkEnergy(i, j)
 
-            if energy1 >= energy2 and np.random.rand() > np.exp((energy2 - energy1) / Boltzmann / (self._temperature)):
+            if energy1 >= energy2: # and np.random.rand() < np.exp((energy2 - energy1) / Boltzmann / (self._temperature)):
                 self._matrixRepresentation[i % self._width][j % self._height] *= -1
-
-
 
     def width(self):
         '''Returns the width of the lattice'''
