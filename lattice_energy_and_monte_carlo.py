@@ -4,60 +4,58 @@ from matplotlib import pyplot as plt
 from scipy.constants import Boltzmann
 import matplotlib.animation as anim
 
+
 width = 25
 height = 25
-temp = 2 #Temperature is in Kelvin
-#plt.ion()
+temp = 2  # Temperature is in Kelvin
+
+
+# plt.ion()
 
 class Lattice(object):
     '''Class to represent a lattice'''
+
     def __init__(self, width, height, temperature):
         '''Initializes the lattice'''
         self._width = width
         self._height = height
         self._temperature = temperature
-        self._matrixRepresentation = np.random.randint(2, size=(height, width))
+        self._matrixRepresentation = np.random.choice([-1, 1], size=(height, width))
         self._energy = self.energyCalculation(self._matrixRepresentation)
-        
+
     def energyCalculation(self, lattice):
         '''Calculates the total energy of the lattice'''
-        lattice = 2*lattice - np.ones((self._height, self._width))
+        lattice = self._matrixRepresentation
         upshift = np.roll(lattice, -1, axis=0)
         downshift = np.roll(lattice, 1, axis=0)
         leftshift = np.roll(lattice, -1, axis=1)
         rightshift = np.roll(lattice, 1, axis=1)
 
-        return (np.sum(lattice*upshift) + np.sum(lattice*downshift) + np.sum(lattice*leftshift) + np.sum(lattice*rightshift))/2
+        return -(np.sum(lattice * (upshift + downshift + leftshift + rightshift))) / 2
 
     def monteCarlo(self, steps):
         '''Performs Monte Carlo algorithm'''
+
         for x in range(steps):
             i = random.randint(0,self._width-1)
             j = random.randint(0, self._height-1)
 
-            latticeFlippedMatrix = np.copy(self._matrixRepresentation)
-            
-            if latticeFlippedMatrix[i][j] == 1:
-                latticeFlippedMatrix[i][j] = 0
-            else:
-                latticeFlippedMatrix[i][j] = 1
+ #           for m in range(i-1, i+2):
+  #              for n in range(j-1, j+2):
 
-            energyFlipped = self.energyCalculation(latticeFlippedMatrix)
+            energy1 = self.energyCalculation(self._matrixRepresentation)
+            self._matrixRepresentation[i % self._width][j % self._height] *= -1
+            energy2 = self.energyCalculation(self._matrixRepresentation)
 
-            if energyFlipped < self._energy:
-                self._matrixRepresentation = latticeFlippedMatrix
-            else: #What to do if new energy is GREATER than original energy
-                #This doesn't work
-                rand = random.uniform(0,1)
-                energyDifference = energyFlipped-self._energy
-                if rand > np.exp(-energyDifference/(self._temperature)):
-                    self._matrixRepresentation = latticeFlippedMatrix
-        lattice.visualize()
-        
+            if energy1 >= energy2 and np.random.rand() > np.exp((energy2 - energy1) / Boltzmann / (self._temperature)):
+                self._matrixRepresentation[i % self._width][j % self._height] *= -1
+
+
+
     def width(self):
         '''Returns the width of the lattice'''
         return self._width
-    
+
     def height(self):
         '''Returns the height of the lattice'''
         return self._height
@@ -72,17 +70,23 @@ class Lattice(object):
 
     def visualize(self):
         '''Visualizes the the lattice as a colour map'''
-        plt.imshow(self._matrixRepresentation, cmap = 'winter', interpolation='nearest')
-        plt.show()
+        plt.imshow(self._matrixRepresentation, cmap='summer', interpolation='nearest')
 
     def __repr__(self):
         '''Returns a string representation of the lattice'''
         return str(self._matrixRepresentation)
 
-lattice = Lattice(width,height, temp)
-#print(lattice)
-#print(lattice.energy())
-lattice.visualize()
-lattice.monteCarlo(10000)
-#fig1 = plt.figure()
-#animation = anim.FuncAnimation(fig1, monteCarlo, interval=50, fargs(1,))
+
+def animate(i):
+    '''Function called every time a frame is made in the animation. Used for FuncAnimation.'''
+    fig1.clear()
+    lattice.monteCarlo(100)
+    lattice.visualize()
+
+
+lattice = Lattice(width, height, temp)
+fig1 = plt.figure()
+animation = anim.FuncAnimation(fig1, animate,interval=100)
+
+plt.show()
+
