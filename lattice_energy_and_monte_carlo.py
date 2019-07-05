@@ -83,6 +83,8 @@ lattice = Lattice(width,height, temp)
 #print(lattice)
 #print(lattice.energy())
 lattice.visualize()
-lattice.monteCarlo(1000)
+
+lattice.monteCarlo(10000)
+
 #fig1 = plt.figure()
 #animation = anim.FuncAnimation(fig1, monteCarlo, interval=50, fargs(1,))
