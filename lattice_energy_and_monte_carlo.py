@@ -5,8 +5,8 @@ from scipy.constants import Boltzmann
 import matplotlib.animation as anim
 
 
-width = 25
-height = 25
+width = 50
+height = 50
 temp = 2  # Temperature is in Kelvin
 
 
@@ -26,15 +26,19 @@ class Lattice(object):
     def energyCalculation(self, lattice):
         '''Calculates the total energy of the lattice'''
         lattice = self._matrixRepresentation
+        # Shifting the lattice in order to get the nearest 
+        # neighbour interactions as efficiently as possible
         upshift = np.roll(lattice, -1, axis=0)
         downshift = np.roll(lattice, 1, axis=0)
         leftshift = np.roll(lattice, -1, axis=1)
         rightshift = np.roll(lattice, 1, axis=1)
+        # Magnitude of the external electric field
+        H = 0
 
-        return -(np.sum(lattice * (upshift + downshift + leftshift + rightshift))) / 2
+        return -(np.sum(lattice * (upshift + downshift + leftshift + rightshift))) / 2 - (np.sum(H*lattice))
 
-    def chonkEnergy(self, i, j):
-        '''Calculates the energy of a small chunk'''
+    def energy_at_a_point(self, i, j):
+        '''Calculates the energy of a point'''
         return -self._matrixRepresentation[i][j] * (self._matrixRepresentation[(i-1) % self._width][j % self._width]
                                                    + self._matrixRepresentation[(i+1) % self._width][j % self._width]
                                                    + self._matrixRepresentation[i % self._width][(j-1) % self._width]
@@ -47,9 +51,9 @@ class Lattice(object):
             i = random.randint(0, self._width-1)
             j = random.randint(0, self._height-1)
 
-            energy1 = self.chonkEnergy(i, j)
+            energy1 = self.energy_at_a_point(i, j)
             self._matrixRepresentation[i][j] *= -1
-            energy2 = self.chonkEnergy(i, j)
+            energy2 = self.energy_at_a_point(i, j)
 
             if energy1 >= energy2: # and np.random.rand() < np.exp((energy2 - energy1) / Boltzmann / (self._temperature)):
                 self._matrixRepresentation[i][j] *= -1
