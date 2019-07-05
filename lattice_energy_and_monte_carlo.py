@@ -48,11 +48,11 @@ class Lattice(object):
             j = random.randint(0, self._height-1)
 
             energy1 = self.chonkEnergy(i, j)
-            self._matrixRepresentation[i % self._width][j % self._height] *= -1
+            self._matrixRepresentation[i][j] *= -1
             energy2 = self.chonkEnergy(i, j)
 
             if energy1 >= energy2: # and np.random.rand() < np.exp((energy2 - energy1) / Boltzmann / (self._temperature)):
-                self._matrixRepresentation[i % self._width][j % self._height] *= -1
+                self._matrixRepresentation[i][j] *= -1
 
     def width(self):
         '''Returns the width of the lattice'''
