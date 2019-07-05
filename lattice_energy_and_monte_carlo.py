@@ -35,7 +35,7 @@ class Lattice(object):
 
     def chonkEnergy(self, i, j):
         '''Calculates the energy of a small chunk'''
-        return self._matrixRepresentation[i][j] * (self._matrixRepresentation[(i-1) % self._width][j % self._width]
+        return -self._matrixRepresentation[i][j] * (self._matrixRepresentation[(i-1) % self._width][j % self._width]
                                                    + self._matrixRepresentation[(i+1) % self._width][j % self._width]
                                                    + self._matrixRepresentation[i % self._width][(j-1) % self._width]
                                                    + self._matrixRepresentation[i % self._width][(j+1) % self._width])
