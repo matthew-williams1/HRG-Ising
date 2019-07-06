@@ -5,9 +5,9 @@ from scipy.constants import Boltzmann
 import matplotlib.animation as anim
 
 
-width = 50
-height = 50
-temp = 2  # Temperature is in Kelvin
+width = 30
+height = 30
+temperature = 2.0  # Temperature is in Kelvin
 
 
 # plt.ion()
@@ -57,6 +57,12 @@ class Lattice(object):
 
             if energy1 >= energy2: # and np.random.rand() < np.exp((energy2 - energy1) / Boltzmann / (self._temperature)):
                 self._matrixRepresentation[i][j] *= -1
+            # decreases the temperature of the lattice with every M-C step
+            new_temp = self._temperature*0.99
+            self._temperature = new_temp
+            #print(self._temperature)
+
+
 
     def width(self):
         '''Returns the width of the lattice'''
@@ -78,6 +84,10 @@ class Lattice(object):
         '''Visualizes the the lattice as a colour map'''
         plt.imshow(self._matrixRepresentation, cmap='summer', interpolation='nearest')
 
+    def temperature(self):
+        '''Returns the temperature of the lattice'''
+        return self._temperature
+
     def __repr__(self):
         '''Returns a string representation of the lattice'''
         return str(self._matrixRepresentation)
@@ -86,13 +96,13 @@ class Lattice(object):
 def animate(i):
     '''Function called every time a frame is made in the animation. Used for FuncAnimation.'''
     fig1.clear()
-    lattice.monteCarlo(100)
+    lattice.monteCarlo(10)
     lattice.visualize()
 
 
-lattice = Lattice(width, height, temp)
+lattice = Lattice(width, height, temperature)
 fig1 = plt.figure()
-animation = anim.FuncAnimation(fig1, animate,interval=100)
+animation = anim.FuncAnimation(fig1, animate,interval=10)
+
 
 plt.show()
-
