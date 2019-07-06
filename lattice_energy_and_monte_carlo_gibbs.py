@@ -6,7 +6,7 @@ import matplotlib.animation as anim
 
 width = 100
 height = 100
-temp = 2  # Temperature is in Kelvin
+temperature = 2  # Temperature is in Kelvin
 
 class Lattice(object):
     '''Class to represent a lattice'''
@@ -21,15 +21,21 @@ class Lattice(object):
 
     def energyCalculation(self, lattice):
         '''Calculates the total energy of the lattice'''
+        # Shifting the lattice in order to get the nearest 
+        # neighbour interactions as efficiently as possible
         lattice = self._matrixRepresentation
         upshift = np.roll(lattice, -1, axis=0)
         downshift = np.roll(lattice, 1, axis=0)
         leftshift = np.roll(lattice, -1, axis=1)
         rightshift = np.roll(lattice, 1, axis=1)
-        return -(np.sum(lattice * (upshift + downshift + leftshift + rightshift))) / 2
+        # Magnitude of the external electric field
+        H = 0
 
-    def chonkEnergy(self, i, j):
-        '''Calculates the energy of a small chunk'''
+        print(np.sum(H*lattice))
+        return -(np.sum(lattice * (upshift + downshift + leftshift + rightshift))) / 2 - (np.sum(H*lattice))
+
+    def energy_at_a_point(self, i, j):
+        '''Calculates the energy at a given point'''
         return -self._matrixRepresentation[i][j] * (self._matrixRepresentation[(i-1) % self._width][j % self._width]
                                                    + self._matrixRepresentation[(i+1) % self._width][j % self._width]
                                                    + self._matrixRepresentation[i % self._width][(j-1) % self._width]
@@ -44,9 +50,9 @@ class Lattice(object):
             j = random.randint(0, self._height-1)
             r = random.uniform(0,1)
             
-            energy1 = self.chonkEnergy(i,j)
+            energy1 = self.energy_at_a_point(i,j)
             self._matrixRepresentation[i][j] *= -1
-            energy2 = self.chonkEnergy(i,j)
+            energy2 = self.energy_at_a_point(i,j)
             
             prob = self.probability(energy1-energy2)
 
@@ -90,7 +96,7 @@ def animate(i):
     lattice.visualize()
 
 
-lattice = Lattice(width, height, temp)
+lattice = Lattice(width, height, temperature)
 fig1 = plt.figure()
 animation = anim.FuncAnimation(fig1, animate)
 
