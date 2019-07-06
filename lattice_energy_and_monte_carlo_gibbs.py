@@ -4,9 +4,10 @@ from matplotlib import pyplot as plt
 from scipy.constants import Boltzmann
 import matplotlib.animation as anim
 
-width = 100
-height = 100
+width = 5
+height = 5
 temperature = 2  # Temperature is in Kelvin
+cooling_history = open(r"Cooling_History.txt", "a") # opens .txt file to store lattice configs
 
 class Lattice(object):
     '''Class to represent a lattice'''
@@ -16,7 +17,7 @@ class Lattice(object):
         self._width = width
         self._height = height
         self._temperature = temperature
-        self._matrixRepresentation = np.random.choice([-1, 1], size=(height, width))
+        self._matrixRepresentation = np.rint(np.random.choice([-1, 1], size=(height, width)))
         self._energy = self.energyCalculation(self._matrixRepresentation)
 
     def energyCalculation(self, lattice):
@@ -30,8 +31,8 @@ class Lattice(object):
         rightshift = np.roll(lattice, 1, axis=1)
         # Magnitude of the external electric field
         H = 0
+        #print(np.sum(H*lattice))
 
-        print(np.sum(H*lattice))
         return -(np.sum(lattice * (upshift + downshift + leftshift + rightshift))) / 2 - (np.sum(H*lattice))
 
     def energy_at_a_point(self, i, j):
@@ -59,7 +60,12 @@ class Lattice(object):
             transitionProbability = min(1, prob)
             if r > transitionProbability:
                 self._matrixRepresentation[i][j] *= -1
-            
+    
+        # saves the lattice config to an uncompressed .txt file
+        np.savetxt(cooling_history, self._matrixRepresentation, fmt = '%.01e', newline='\n')
+        # saves the lattice config to a compressed .npz file
+        np.savez_compressed('Compressed_Cooling_History', self._matrixRepresentation)
+        
     def probability(self, energy):
         '''Calculates the probability given an energy'''
         return np.exp(-energy/self._temperature)
@@ -92,12 +98,15 @@ class Lattice(object):
 def animate(i):
     '''Function called every time a frame is made in the animation. Used for FuncAnimation.'''
     fig1.clear()
-    lattice.monteCarlo(10000)
+    lattice.monteCarlo(10)
     lattice.visualize()
-
 
 lattice = Lattice(width, height, temperature)
 fig1 = plt.figure()
 animation = anim.FuncAnimation(fig1, animate)
 
 plt.show()
+
+#print(np.load('arr_0.npy'))
+
+cooling_history.close()
