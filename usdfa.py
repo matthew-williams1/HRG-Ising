@@ -1,12 +1,13 @@
+import numpy.random as rand
 import random
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.constants import Boltzmann
 import matplotlib.animation as anim
 
-width = 25
-height = 25
-temp = 0.1  # Temperature is in Kelvin
+width = 100
+height = 100
+temp = 1 # Temperature is in Kelvin
 
 
 # plt.ion()
@@ -21,6 +22,13 @@ class Lattice(object):
         self._temperature = temperature
         self._matrixRepresentation = np.random.choice([-1, 1], size=(height, width))
         self._energy = self.energyCalculation(self._matrixRepresentation)
+
+    def chunkE(self, i, j):
+        '''Calculates the energy of a small chunk'''
+        return self._matrixRepresentation[i][j] * (self._matrixRepresentation[(i-1) % self._width][j % self._width]
+                                                    + self._matrixRepresentation[(i+1) % self._width][j % self._width]
+                                                    + self._matrixRepresentation[i % self._width][(j-1) % self._width]
+                                                    + self._matrixRepresentation[i % self._width][(j+1) % self._width])
 
     def energyCalculation(self, lattice):
         '''Calculates the total energy of the lattice'''
@@ -39,13 +47,17 @@ class Lattice(object):
             i = random.randint(0,self._width-1)
             j = random.randint(0, self._height-1)
 
-            energy1 = self._energy
+            energy1 = self.chunkE(i,j)
             self._matrixRepresentation[i][j] *= -1
-            energy2 = self.energyCalculation(self._matrixRepresentation)
-
-            print(energy1 - energy2)
+            energy2 = self.chunkE(i,j)
+            dE = energy2 - energy1
+            # print(energy1 - energy2)
             if energy1 >= energy2: #and np.random.rand() < np.exp(-(energy2 - energy1) / Boltzmann / (self._temperature)):
                 self._matrixRepresentation[i][j] *= -1
+            else:
+                if rand.rand() <= np.exp(dE/self._temperature):
+                    self._matrixRepresentation[i][j] *= -1
+                    
 
 
     def width(self):
