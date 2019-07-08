@@ -4,8 +4,8 @@ from matplotlib import pyplot as plt
 from scipy.constants import Boltzmann
 import matplotlib.animation as anim
 
-width = 5
-height = 5
+width = 20
+height = 20
 temperature = 2  # Temperature is in Kelvin
 cooling_history = open(r"Cooling_History.txt", "a") # opens .txt file to store lattice configs
 
@@ -30,8 +30,9 @@ class Lattice(object):
         leftshift = np.roll(lattice, -1, axis=1)
         rightshift = np.roll(lattice, 1, axis=1)
         # Magnitude of the external electric field
-        H = 0
-        #print(np.sum(H*lattice))
+        H = 100*np.random.rand(self._height, self._width)
+        print("H=",H)
+        print("Field energy=",np.sum(H*lattice))
 
         return -(np.sum(lattice * (upshift + downshift + leftshift + rightshift))) / 2 - (np.sum(H*lattice))
 
@@ -98,7 +99,7 @@ class Lattice(object):
 def animate(i):
     '''Function called every time a frame is made in the animation. Used for FuncAnimation.'''
     fig1.clear()
-    lattice.monteCarlo(10)
+    lattice.monteCarlo(1000)
     lattice.visualize()
 
 lattice = Lattice(width, height, temperature)
