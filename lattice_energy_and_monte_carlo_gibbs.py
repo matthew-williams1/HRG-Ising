@@ -22,7 +22,7 @@ class Lattice(object):
 
     def energyCalculation(self, lattice):
         '''Calculates the total energy of the lattice'''
-        # Shifting the lattice in order to get the nearest 
+        # Shifting the lattice in order to get the nearest
         # neighbour interactions as efficiently as possible
         lattice = self._matrixRepresentation
         upshift = np.roll(lattice, -1, axis=0)
@@ -47,26 +47,29 @@ class Lattice(object):
         '''Performs Monte Carlo algorithm'''
         for x in range(steps):
             #self._energy = self.energyCalculation(self._matrixRepresentation)
-            
+
             i = random.randint(0,self._width-1)
             j = random.randint(0, self._height-1)
             r = random.uniform(0,1)
-            
+
             energy1 = self.energy_at_a_point(i,j)
             self._matrixRepresentation[i][j] *= -1
             energy2 = self.energy_at_a_point(i,j)
-            
+
             prob = self.probability(energy1-energy2)
 
             transitionProbability = min(1, prob)
             if r > transitionProbability:
                 self._matrixRepresentation[i][j] *= -1
-    
+
+            if self._temperature > 0:
+                self._temperature-=0.01
+
         # saves the lattice config to an uncompressed .txt file
         np.savetxt(cooling_history, self._matrixRepresentation, fmt = '%.01e', newline='\n')
         # saves the lattice config to a compressed .npz file
         np.savez_compressed('Compressed_Cooling_History', self._matrixRepresentation)
-        
+
     def probability(self, energy):
         '''Calculates the probability given an energy'''
         return np.exp(-energy/self._temperature)
@@ -94,6 +97,9 @@ class Lattice(object):
     def __repr__(self):
         '''Returns a string representation of the lattice'''
         return str(self._matrixRepresentation)
+    def temperature(self):
+        '''returns the temperature'''
+        return self._temperature
 
 
 def animate(i):
