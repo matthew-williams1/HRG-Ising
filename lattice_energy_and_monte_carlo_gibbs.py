@@ -97,6 +97,7 @@ class Lattice(object):
     def __repr__(self):
         '''Returns a string representation of the lattice'''
         return str(self._matrixRepresentation)
+
     def temperature(self):
         '''returns the temperature'''
         return self._temperature
