@@ -28,10 +28,10 @@ class Lattice(object):
 
         for i in range(height):
             for j in range(int(width/2)):
-                field[i, j] = half1
+                field[i][j] = half1
 
             for j in range(int(width/2), width):
-                field[i, j] = half2
+                field[i][j] = half2
 
         return field
 
