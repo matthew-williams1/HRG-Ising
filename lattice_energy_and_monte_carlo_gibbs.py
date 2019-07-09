@@ -20,9 +20,10 @@ class Lattice(object):
         self._matrixRepresentation = np.rint(np.random.choice([-1, 1], size=(height, width)))
         self._energy = self.energyCalculation(self._matrixRepresentation)
 
-    def make_field(self, half1, half2):
+    def make_field(self):
         '''Returns a field matrix with two uniform halves'''
-
+        half1 = random.uniform(-1, 1)
+        half2 = random.uniform(-1, 1)
         field = np.empty((width, height))
 
         for i in range(height):
@@ -48,7 +49,7 @@ class Lattice(object):
         # print("H=",H)
         # print("Field energy=",np.sum(H*lattice))
 
-        return -(np.sum(lattice * (upshift + downshift + leftshift + rightshift))) / 2 - (np.sum(self.make_field(1, -1)*lattice))
+        return -(np.sum(lattice * (upshift + downshift + leftshift + rightshift))) / 2 - (np.sum(self.make_field()*lattice))
 
     def energy_at_a_point(self, i, j):
         '''Calculates the energy at a given point'''
