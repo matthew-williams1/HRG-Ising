@@ -20,6 +20,20 @@ class Lattice(object):
         self._matrixRepresentation = np.rint(np.random.choice([-1, 1], size=(height, width)))
         self._energy = self.energyCalculation(self._matrixRepresentation)
 
+    def make_field(self, half1, half2):
+        '''Returns a field matrix with two uniform halves'''
+
+        field = np.empty((width, height))
+
+        for i in range(height):
+            for j in range(int(width/2)):
+                field[i, j] = half1
+
+            for j in range(int(width/2), width):
+                field[i, j] = half2
+
+        return field
+
     def energyCalculation(self, lattice):
         '''Calculates the total energy of the lattice'''
         # Shifting the lattice in order to get the nearest
@@ -30,11 +44,11 @@ class Lattice(object):
         leftshift = np.roll(lattice, -1, axis=1)
         rightshift = np.roll(lattice, 1, axis=1)
         # Magnitude of the external electric field
-        H = 100*np.random.rand(self._height, self._width)
-        print("H=",H)
-        print("Field energy=",np.sum(H*lattice))
+        # H = 100*np.random.rand(self._height, self._width)
+        # print("H=",H)
+        # print("Field energy=",np.sum(H*lattice))
 
-        return -(np.sum(lattice * (upshift + downshift + leftshift + rightshift))) / 2 - (np.sum(H*lattice))
+        return -(np.sum(lattice * (upshift + downshift + leftshift + rightshift))) / 2 - (np.sum(self.make_field(1, -1)*lattice))
 
     def energy_at_a_point(self, i, j):
         '''Calculates the energy at a given point'''
