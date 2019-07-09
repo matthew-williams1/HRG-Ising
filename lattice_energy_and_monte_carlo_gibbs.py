@@ -62,8 +62,8 @@ class Lattice(object):
             if r > transitionProbability:
                 self._matrixRepresentation[i][j] *= -1
 
-            if self._temperature > 0:
-                self._temperature-=0.01
+            if self._temperature > 0.1:
+                self._temperature-=0.001
 
         # saves the lattice config to an uncompressed .txt file
         np.savetxt(cooling_history, self._matrixRepresentation, fmt = '%.01e', newline='\n')
@@ -107,6 +107,8 @@ def animate(i):
     '''Function called every time a frame is made in the animation. Used for FuncAnimation.'''
     fig1.clear()
     lattice.monteCarlo(1000)
+    temperature_string = "Temperature: " + str(lattice._temperature)
+    fig1.suptitle(temperature_string)
     lattice.visualize()
 
 lattice = Lattice(width, height, temperature)
