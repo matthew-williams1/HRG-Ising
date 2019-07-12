@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 from scipy.constants import Boltzmann
 import matplotlib.animation as anim
 
+corner_factor = 0
 width = 256
 height = 256
 temperature = 2  # Temperature is in Kelvin
@@ -54,9 +55,13 @@ class Lattice(object):
     def energy_at_a_point(self, i, j):
         '''Calculates the energy at a given point'''
         return -self._matrixRepresentation[i][j] * (self._matrixRepresentation[(i-1) % self._width][j % self._width]
-                                                   + self._matrixRepresentation[(i+1) % self._width][j % self._width]
-                                                   + self._matrixRepresentation[i % self._width][(j-1) % self._width]
-                                                   + self._matrixRepresentation[i % self._width][(j+1) % self._width])
+                                                + self._matrixRepresentation[(i+1) % self._width][j % self._width]
+                                                + self._matrixRepresentation[i % self._width][(j-1) % self._width]
+                                                + self._matrixRepresentation[i % self._width][(j+1) % self._width]
+                                                + a * (self._matrixRepresentation[(i-1) % self._width][(j-1) % self._width]
+                                                + self._matrixRepresentation[(i+1) % self._width][(j-1) % self._width]
+                                                + self._matrixRepresentation[(i+1) % self._width][(j+1) % self._width]
+                                                + self._matrixRepresentation[(i-1) % self._width][(j+1) % self._width]))
 
     def monteCarlo(self, steps):
         '''Performs Monte Carlo algorithm'''
