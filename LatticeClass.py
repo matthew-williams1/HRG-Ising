@@ -2,7 +2,7 @@ import random
 import numpy as np
 from matplotlib import pyplot as plt
 
-a = 0
+corner_factor = 0
 width = 200
 height = 200
 temperature = 2  # Temperature is in Kelvin
@@ -59,7 +59,7 @@ class Lattice(object):
                                             + self._matrixRepresentation[(i+1) % self._width][j % self._width]
                                             + self._matrixRepresentation[i % self._width][(j-1) % self._width]
                                             + self._matrixRepresentation[i % self._width][(j+1) % self._width]
-                                            + a * (self._matrixRepresentation[(i-1) % self._width][(j-1) % self._width]
+                                            + corner_factor * (self._matrixRepresentation[(i-1) % self._width][(j-1) % self._width]
                                             + self._matrixRepresentation[(i+1) % self._width][(j-1) % self._width]
                                             + self._matrixRepresentation[(i+1) % self._width][(j+1) % self._width]
                                             + self._matrixRepresentation[(i-1) % self._width][(j+1) % self._width])) / 2
@@ -83,6 +83,11 @@ class Lattice(object):
 
             if self._temperature > 0.1:
                 self._temperature -= 0.01
+                
+    def sobel_filter(self, source_image):
+        '''Convolves the lattice'''
+        kernel = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
+        return scipy.signal.convolve2d(kernel, source_image, boundary='fill')
 
     def probability(self, energy):
         '''Calculates the probability given an energy'''
