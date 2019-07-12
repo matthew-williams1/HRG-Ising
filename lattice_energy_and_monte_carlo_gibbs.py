@@ -44,7 +44,7 @@ class Lattice(object):
         downshift = np.roll(lattice, 1, axis=0)
         leftshift = np.roll(lattice, -1, axis=1)
         rightshift = np.roll(lattice, 1, axis=1)
-        # Magnitude of the external electric field
+        # Magnitude of the external magnetic field
         # H = 100*np.random.rand(self._height, self._width)
         # print("H=",H)
         # print("Field energy=",np.sum(H*lattice))
