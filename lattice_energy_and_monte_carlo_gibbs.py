@@ -58,7 +58,7 @@ class Lattice(object):
                                                 + self._matrixRepresentation[(i+1) % self._width][j % self._width]
                                                 + self._matrixRepresentation[i % self._width][(j-1) % self._width]
                                                 + self._matrixRepresentation[i % self._width][(j+1) % self._width]
-                                                + a * (self._matrixRepresentation[(i-1) % self._width][(j-1) % self._width]
+                                                + corner_factor * (self._matrixRepresentation[(i-1) % self._width][(j-1) % self._width]
                                                 + self._matrixRepresentation[(i+1) % self._width][(j-1) % self._width]
                                                 + self._matrixRepresentation[(i+1) % self._width][(j+1) % self._width]
                                                 + self._matrixRepresentation[(i-1) % self._width][(j+1) % self._width]))
