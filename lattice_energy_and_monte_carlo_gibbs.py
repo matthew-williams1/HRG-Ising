@@ -4,8 +4,8 @@ from matplotlib import pyplot as plt
 from scipy.constants import Boltzmann
 import matplotlib.animation as anim
 
-width = 20
-height = 20
+width = 256
+height = 256
 temperature = 2  # Temperature is in Kelvin
 cooling_history = open(r"Cooling_History.txt", "a") # opens .txt file to store lattice configs
 
@@ -63,19 +63,20 @@ class Lattice(object):
         for x in range(steps):
             #self._energy = self.energyCalculation(self._matrixRepresentation)
 
-            i = random.randint(0,self._width-1)
-            j = random.randint(0, self._height-1)
-            r = random.uniform(0,1)
+            #i = random.randint(0,self._width-1)
+            #j = random.randint(0, self._height-1)
+            for i in range(width):
+                for j in range(height):
+                    r = random.uniform(0,1)
+                    energy1 = self.energy_at_a_point(i,j)
+                    self._matrixRepresentation[i][j] *= -1
+                    energy2 = self.energy_at_a_point(i,j)
 
-            energy1 = self.energy_at_a_point(i,j)
-            self._matrixRepresentation[i][j] *= -1
-            energy2 = self.energy_at_a_point(i,j)
+                    prob = self.probability(energy1-energy2)
 
-            prob = self.probability(energy1-energy2)
-
-            transitionProbability = min(1, prob)
-            if r > transitionProbability:
-                self._matrixRepresentation[i][j] *= -1
+                    transitionProbability = min(1, prob)
+                    if r > transitionProbability:
+                        self._matrixRepresentation[i][j] *= -1
 
             if self._temperature > 0.1:
                 self._temperature-=0.001
@@ -121,7 +122,7 @@ class Lattice(object):
 def animate(i):
     '''Function called every time a frame is made in the animation. Used for FuncAnimation.'''
     fig1.clear()
-    lattice.monteCarlo(1000)
+    lattice.monteCarlo(1)
     temperature_string = "Temperature: " + str(lattice._temperature)
     fig1.suptitle(temperature_string)
     lattice.visualize()
