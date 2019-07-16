@@ -20,8 +20,8 @@ class Lattice(object):
         self._width = width
         self._height = height
         self._temperature = temperature
-        self._matrixRepresentation = np.rint(np.random.choice([-1, 1], size=(height, width)))
-        self._energy = self.energyCalculation(self._matrixRepresentation)
+        self._matrix_representation = np.rint(np.random.choice([-1, 1], size=(height, width)))
+        self._energy = self.energy_calculation(self._matrix_representation)
 
     def make_field(self):
         '''Returns a field matrix with two uniform halves'''
@@ -38,11 +38,11 @@ class Lattice(object):
 
         return field
 
-    def energyCalculation(self, lattice):
+    def energy_calculation(self, lattice):
         '''Calculates the total energy of the lattice'''
         # Shifting the lattice in order to get the nearest
         # neighbour interactions as efficiently as possible
-        lattice = self._matrixRepresentation
+        lattice = self._matrix_representation
         upshift = np.roll(lattice, -1, axis=0)
         downshift = np.roll(lattice, 1, axis=0)
         leftshift = np.roll(lattice, -1, axis=1)
@@ -56,41 +56,41 @@ class Lattice(object):
 
     def energy_at_a_point(self, i, j):
         '''Calculates the energy at a given point'''
-        return -self._matrixRepresentation[i][j] * (self._matrixRepresentation[(i-1) % self._width][j % self._width]
-                                                + self._matrixRepresentation[(i+1) % self._width][j % self._width]
-                                                + self._matrixRepresentation[i % self._width][(j-1) % self._width]
-                                                + self._matrixRepresentation[i % self._width][(j+1) % self._width]
-                                                + corner_factor * (self._matrixRepresentation[(i-1) % self._width][(j-1) % self._width]
-                                                + self._matrixRepresentation[(i+1) % self._width][(j-1) % self._width]
-                                                + self._matrixRepresentation[(i+1) % self._width][(j+1) % self._width]
-                                                + self._matrixRepresentation[(i-1) % self._width][(j+1) % self._width]))
+        return -self._matrix_representation[i][j] * (self._matrix_representation[(i-1) % self._width][j % self._width]
+                                                + self._matrix_representation[(i+1) % self._width][j % self._width]
+                                                + self._matrix_representation[i % self._width][(j-1) % self._width]
+                                                + self._matrix_representation[i % self._width][(j+1) % self._width]
+                                                + corner_factor * (self._matrix_representation[(i-1) % self._width][(j-1) % self._width]
+                                                + self._matrix_representation[(i+1) % self._width][(j-1) % self._width]
+                                                + self._matrix_representation[(i+1) % self._width][(j+1) % self._width]
+                                                + self._matrix_representation[(i-1) % self._width][(j+1) % self._width]))
 
-    def monteCarlo(self, steps):
+    def monte_carlo(self, steps):
         '''Performs Monte Carlo algorithm'''
         for x in range(steps):
-            #self._energy = self.energyCalculation(self._matrixRepresentation)
+            #self._energy = self.energy_calculation(self._matrix_representation)
             #i = random.randint(0,self._width-1)
             #j = random.randint(0, self._height-1)
             for i in range(width):
                 for j in range(height):
                     r = random.uniform(0,1)
                     energy1 = self.energy_at_a_point(i,j)
-                    self._matrixRepresentation[i][j] *= -1
+                    self._matrix_representation[i][j] *= -1
                     energy2 = self.energy_at_a_point(i,j)
 
                     prob = self.probability(energy1-energy2)
 
                     transitionProbability = min(1, prob)
                     if r > transitionProbability:
-                        self._matrixRepresentation[i][j] *= -1
+                        self._matrix_representation[i][j] *= -1
 
             if self._temperature > 0.1:
                 self._temperature-=0.001
 
         # saves the lattice config to an uncompressed .txt file
-        np.savetxt(cooling_history, self._matrixRepresentation, fmt = '%.01e', newline='\n')
+        np.savetxt(cooling_history, self._matrix_representation, fmt = '%.01e', newline='\n')
         # saves the lattice config to a compressed .npz file
-        np.savez_compressed('Compressed_Cooling_History', self._matrixRepresentation)
+        np.savez_compressed('Compressed_Cooling_History', self._matrix_representation)
 
     def sobel_filter(self, source_image):
         '''Convolves the lattice'''
@@ -113,21 +113,21 @@ class Lattice(object):
         '''Returns the energy of the lattice'''
         return self._energy
 
-    def getMatrixRepresentation(self):
+    def getmatrix_representation(self):
         '''Returns the matrix representation of the lattice'''
-        return self._matrixRepresentation
+        return self._matrix_representation
 
     def visualize(self):
         '''Visualizes the the lattice as a colour map'''
-        plt.imshow(self._matrixRepresentation, cmap='summer', interpolation='nearest')
+        plt.imshow(self._matrix_representation, cmap='summer', interpolation='nearest')
 
     def visualize_filtered(self):
         '''Visualizes the the lattice as a colour map'''
-        plt.imshow(self.sobel_filter(self._matrixRepresentation), cmap='summer', interpolation='nearest')
+        plt.imshow(self.sobel_filter(self._matrix_representation), cmap='summer', interpolation='nearest')
 
     def __repr__(self):
         '''Returns a string representation of the lattice'''
-        return str(self._matrixRepresentation)
+        return str(self._matrix_representation)
 
     def temperature(self):
         '''returns the temperature'''
@@ -136,7 +136,7 @@ class Lattice(object):
 def animate_unfiltered(i):
     '''Function called every time a frame is made in the animation. Used for FuncAnimation.'''
     fig_unfiltered.clear()
-    lattice.monteCarlo(1)
+    lattice.monte_carlo(1)
     temperature_string = "Temperature: " + str(lattice._temperature)
     fig_unfiltered.suptitle(temperature_string)
     lattice.visualize()
@@ -144,7 +144,7 @@ def animate_unfiltered(i):
 def animate_filtered(i):
     '''Function called every time a frame is made in the animation. Used for FuncAnimation.'''
     fig_filtered.clear()
-    lattice.monteCarlo(1)
+    lattice.monte_carlo(1)
     temperature_string = "Temperature: " + str(lattice._temperature)
     fig_filtered.suptitle(temperature_string)
     lattice.visualize_filtered()
