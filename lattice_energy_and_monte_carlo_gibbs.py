@@ -2,13 +2,15 @@ import random
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.constants import Boltzmann
+import scipy.signal
 import matplotlib.animation as anim
 
 corner_factor = 0
-width = 256
-height = 256
+width = 128
+height = 128
 temperature = 2  # Temperature is in Kelvin
 cooling_history = open(r"Cooling_History.txt", "a") # opens .txt file to store lattice configs
+is_filtered = False
 
 class Lattice(object):
     '''Class to represent a lattice'''
@@ -67,7 +69,6 @@ class Lattice(object):
         '''Performs Monte Carlo algorithm'''
         for x in range(steps):
             #self._energy = self.energyCalculation(self._matrixRepresentation)
-
             #i = random.randint(0,self._width-1)
             #j = random.randint(0, self._height-1)
             for i in range(width):
@@ -90,6 +91,11 @@ class Lattice(object):
         np.savetxt(cooling_history, self._matrixRepresentation, fmt = '%.01e', newline='\n')
         # saves the lattice config to a compressed .npz file
         np.savez_compressed('Compressed_Cooling_History', self._matrixRepresentation)
+
+    def sobel_filter(self, source_image):
+        '''Convolves the lattice'''
+        kernel_x = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
+        return scipy.signal.convolve2d(kernel_x, source_image, boundary='fill')   
 
     def probability(self, energy):
         '''Calculates the probability given an energy'''
@@ -115,6 +121,10 @@ class Lattice(object):
         '''Visualizes the the lattice as a colour map'''
         plt.imshow(self._matrixRepresentation, cmap='summer', interpolation='nearest')
 
+    def visualize_filtered(self):
+        '''Visualizes the the lattice as a colour map'''
+        plt.imshow(self.sobel_filter(self._matrixRepresentation), cmap='summer', interpolation='nearest')
+
     def __repr__(self):
         '''Returns a string representation of the lattice'''
         return str(self._matrixRepresentation)
@@ -123,18 +133,30 @@ class Lattice(object):
         '''returns the temperature'''
         return self._temperature
 
-
-def animate(i):
+def animate_unfiltered(i):
     '''Function called every time a frame is made in the animation. Used for FuncAnimation.'''
-    fig1.clear()
+    fig_unfiltered.clear()
     lattice.monteCarlo(1)
     temperature_string = "Temperature: " + str(lattice._temperature)
-    fig1.suptitle(temperature_string)
+    fig_unfiltered.suptitle(temperature_string)
     lattice.visualize()
 
+def animate_filtered(i):
+    '''Function called every time a frame is made in the animation. Used for FuncAnimation.'''
+    fig_filtered.clear()
+    lattice.monteCarlo(1)
+    temperature_string = "Temperature: " + str(lattice._temperature)
+    fig_filtered.suptitle(temperature_string)
+    lattice.visualize_filtered()
+
 lattice = Lattice(width, height, temperature)
-fig1 = plt.figure()
-animation = anim.FuncAnimation(fig1, animate)
+
+if is_filtered:
+    fig_filtered = plt.figure()
+    animation_filtered = anim.FuncAnimation(fig_filtered, animate_filtered)
+else:
+    fig_unfiltered = plt.figure()
+    animation_unfiltered = anim.FuncAnimation(fig_unfiltered, animate_unfiltered)
 
 plt.show()
 
