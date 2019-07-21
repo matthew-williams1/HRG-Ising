@@ -7,9 +7,16 @@ import matplotlib.animation as anim
 from random import randint
 
 corner_factor=0
-width = 128
-height = 128
-temperature = 2  # Temperature is in Kelvin
+width = 256
+height = 256
+t1 = 38  # Start temperature is in Kelvin
+t2 = 1 #end temperature
+steps = 38 #temperature steps
+#temperature array
+temps = np.linspace(t2,t1,steps) 
+#temperature index
+t = temps.shape 
+t = t[0]-1
 cooling_history = open(r"Cooling_History.txt", "a") # opens .txt file to store lattice configs
 is_filtered = False
 field_magnitude = 5
@@ -17,11 +24,13 @@ field_magnitude = 5
 class Lattice(object):
     '''Class to represent a lattice'''
 
-    def __init__(self, width, height, temperature):
+    def __init__(self, width, height, temps):
         '''Initializes the lattice'''
         self._width = width
         self._height = height
-        self._temperature = temperature
+        self._t = temps.shape[0]-1
+        self._temperature = temps[t]
+        self._temps = temps
         self._matrix_representation = np.rint(np.random.choice([-1, 1], size=(height, width)))
         self._energy = self.energyCalculation(self._matrix_representation)
 
@@ -93,8 +102,11 @@ class Lattice(object):
                     if r > transitionProbability:
                         self._matrix_representation[i][j] *= -1
 
-            if self._temperature > 0.1:
-                self._temperature-=0.001
+            # if self._temperature > 0.1:
+            #     self._temperature-=0.001
+        if self._t-1 > 0:
+            self._t -=1
+            self._temperature = self._temps[self._t]
 
         # saves the lattice config to an uncompressed .txt file
         np.savetxt(cooling_history, self._matrix_representation, fmt = '%.01e', newline='\n')
@@ -143,7 +155,7 @@ class Lattice(object):
         return self._temperature
 
 
-lattice = Lattice(width, height, temperature)
+lattice = Lattice(width, height, temps)
 fig= plt.figure()
 fig.clear()
 def animate(i):
