@@ -4,13 +4,15 @@ from matplotlib import pyplot as plt
 from scipy.constants import Boltzmann
 import scipy.signal
 import matplotlib.animation as anim
+from random import randint
 
-corner_factor = 0
+corner_factor=0
 width = 128
 height = 128
 temperature = 2  # Temperature is in Kelvin
 cooling_history = open(r"Cooling_History.txt", "a") # opens .txt file to store lattice configs
 is_filtered = False
+field_magnitude = 5
 
 class Lattice(object):
     '''Class to represent a lattice'''
@@ -21,24 +23,31 @@ class Lattice(object):
         self._height = height
         self._temperature = temperature
         self._matrix_representation = np.rint(np.random.choice([-1, 1], size=(height, width)))
-        self._energy = self.energy_calculation(self._matrix_representation)
+        self._energy = self.energyCalculation(self._matrix_representation)
 
     def make_field(self):
-        '''Returns a field matrix with two uniform halves'''
-        half1 = random.uniform(-1, 1)
-        half2 = random.uniform(-1, 1)
-        field = np.empty((width, height))
+        '''Returns a magnetic field with random size at a random position'''
+        fieldHeight = np.random.randint(1, height)
+        fieldWidth = np.random.randint(1, width)
+        field1 = field_magnitude*np.ones((fieldHeight, fieldWidth))
+        indexHeight = np.random.randint(0, height-fieldHeight)
+        indexWidth = np.random.randint(0, width-fieldWidth)
+        zerosTop = np.zeros((indexHeight, width))
+        zerosBottom = np.zeros((height-fieldHeight-indexHeight, width)) 
+        zerosLeft = np.zeros((fieldHeight, indexWidth))
+        zerosRight = np.zeros((fieldHeight, width-indexWidth-fieldWidth))
+        field2 = np.concatenate((zerosLeft, field1, zerosRight), axis = 1)
+        field = np.concatenate((zerosTop, field2, zerosBottom), axis = 0)
 
-        for i in range(height):
-            for j in range(int(width/2)):
-                field[i][j] = half1
-
-            for j in range(int(width/2), width):
-                field[i][j] = half2
-
+        '''Returns square in the upper left corner of lattice
+        field1=np.zeros((height, width//2))
+        field2 = np.ones((height//2, width//2))
+        field3 = np.zeros((height//2, width//2))
+        field4 = np.concatenate((field2, field3), axis =0)
+        field = field_magnitude*np.concatenate((field4, field1), axis = 1)'''
         return field
 
-    def energy_calculation(self, lattice):
+    def energyCalculation(self, lattice):
         '''Calculates the total energy of the lattice'''
         # Shifting the lattice in order to get the nearest
         # neighbour interactions as efficiently as possible
@@ -52,7 +61,7 @@ class Lattice(object):
         # print("H=",H)
         # print("Field energy=",np.sum(H*lattice))
 
-        return -(np.sum(lattice * (upshift + downshift + leftshift + rightshift))) / 2 - (np.sum(self.make_field()*lattice))
+        return -(np.sum(lattice * (upshift + downshift + leftshift + rightshift))) / 2 #- (np.sum(self.make_field()*lattice))
 
     def energy_at_a_point(self, i, j):
         '''Calculates the energy at a given point'''
@@ -63,12 +72,12 @@ class Lattice(object):
                                                 + corner_factor * (self._matrix_representation[(i-1) % self._width][(j-1) % self._width]
                                                 + self._matrix_representation[(i+1) % self._width][(j-1) % self._width]
                                                 + self._matrix_representation[(i+1) % self._width][(j+1) % self._width]
-                                                + self._matrix_representation[(i-1) % self._width][(j+1) % self._width]))
+                                                + self._matrix_representation[(i-1) % self._width][(j+1) % self._width])) - magneticField[i][j]*self._matrix_representation[i][j] #-self.make_field()[i][j]*self._matrix_representation[i][j]
 
-    def monte_carlo(self, steps):
+    def monteCarlo(self, steps):
         '''Performs Monte Carlo algorithm'''
         for x in range(steps):
-            #self._energy = self.energy_calculation(self._matrix_representation)
+            #self._energy = self.energyCalculation(self._matrix_representation)
             #i = random.randint(0,self._width-1)
             #j = random.randint(0, self._height-1)
             for i in range(width):
@@ -113,7 +122,7 @@ class Lattice(object):
         '''Returns the energy of the lattice'''
         return self._energy
 
-    def getmatrix_representation(self):
+    def getMatrixRepresentation(self):
         '''Returns the matrix representation of the lattice'''
         return self._matrix_representation
 
@@ -133,33 +142,28 @@ class Lattice(object):
         '''returns the temperature'''
         return self._temperature
 
-def animate_unfiltered(i):
-    '''Function called every time a frame is made in the animation. Used for FuncAnimation.'''
-    fig_unfiltered.clear()
-    lattice.monte_carlo(1)
-    temperature_string = "Temperature: " + str(lattice._temperature)
-    fig_unfiltered.suptitle(temperature_string)
-    lattice.visualize()
-
-def animate_filtered(i):
-    '''Function called every time a frame is made in the animation. Used for FuncAnimation.'''
-    fig_filtered.clear()
-    lattice.monte_carlo(1)
-    temperature_string = "Temperature: " + str(lattice._temperature)
-    fig_filtered.suptitle(temperature_string)
-    lattice.visualize_filtered()
 
 lattice = Lattice(width, height, temperature)
+fig= plt.figure()
+fig.clear()
+def animate(i):
+    lattice.monteCarlo(1)
+    temperature_string = "Temperature: " + str(lattice._temperature)
+    fig.suptitle(temperature_string)
+    if is_filtered:
+        return lattice.visualize_filtered()
+    else:
+        return lattice.visualize()
 
-if is_filtered:
-    fig_filtered = plt.figure()
-    animation_filtered = anim.FuncAnimation(fig_filtered, animate_filtered)
-else:
-    fig_unfiltered = plt.figure()
-    animation_unfiltered = anim.FuncAnimation(fig_unfiltered, animate_unfiltered)
+magneticField = lattice.make_field()
+a=anim.FuncAnimation(fig, animate)
+
+
 
 plt.show()
 
 #print(np.load('arr_0.npy'))
 
 cooling_history.close()
+
+#print(lattice.make_field())
