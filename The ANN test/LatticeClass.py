@@ -46,7 +46,7 @@ class Lattice(object):
         '''Calculates the total energy of the lattice'''
         # Shifting the lattice in order to get the nearest
         # neighbour interactions as efficiently as possible
-        lattice = self._matrixRepresentation
+        lattice = self._matrix_representation
         upshift = np.roll(lattice, -1, axis=0)
         downshift = np.roll(lattice, 1, axis=0)
         leftshift = np.roll(lattice, -1, axis=1)
@@ -59,14 +59,14 @@ class Lattice(object):
 
     def energy_at_a_point(self, i, j):
         '''Calculates the energy at a given point'''
-        return -(self._matrixRepresentation[i][j] * (self._matrixRepresentation[(i-1) % self._width][j % self._width]
-                                            + self._matrixRepresentation[(i+1) % self._width][j % self._width]
-                                            + self._matrixRepresentation[i % self._width][(j-1) % self._width]
-                                            + self._matrixRepresentation[i % self._width][(j+1) % self._width]
-                                            + a * (self._matrixRepresentation[(i-1) % self._width][(j-1) % self._width]
-                                            + self._matrixRepresentation[(i+1) % self._width][(j-1) % self._width]
-                                            + self._matrixRepresentation[(i+1) % self._width][(j+1) % self._width]
-                                            + self._matrixRepresentation[(i-1) % self._width][(j+1) % self._width])) / 2
+        return -(self._matrix_representation[i][j] * (self._matrix_representation[(i-1) % self._width][j % self._width]
+                                            + self._matrix_representation[(i+1) % self._width][j % self._width]
+                                            + self._matrix_representation[i % self._width][(j-1) % self._width]
+                                            + self._matrix_representation[i % self._width][(j+1) % self._width]
+                                            + a * (self._matrix_representation[(i-1) % self._width][(j-1) % self._width]
+                                            + self._matrix_representation[(i+1) % self._width][(j-1) % self._width]
+                                            + self._matrix_representation[(i+1) % self._width][(j+1) % self._width]
+                                            + self._matrix_representation[(i-1) % self._width][(j+1) % self._width])) / 2
                                             - self._field[i][j])
 
     def monte_carlo(self, steps):
@@ -76,19 +76,19 @@ class Lattice(object):
                 for j in range(self._height):
                     r = random.uniform(0,1)
                     energy1 = self.energy_at_a_point(i,j)
-                    self._matrixRepresentation[i][j] *= -1
+                    self._matrix_representation[i][j] *= -1
                     energy2 = self.energy_at_a_point(i,j)
 
                     prob = self.probability((energy1-energy2) * self._field[i , j])
 
                     if r > min(1, prob):
-                        self._matrixRepresentation[i][j] *= -1
+                        self._matrix_representation[i][j] *= -1
 
             if self._temperature > 0.1:
                 self._temperature -= 0.05
             if (2 * self._temperature - int(2 * self._temperature)) < 0.0601:
                 if self._slide < 5:
-                    self._history[self._slide] = self._matrixRepresentation
+                    self._history[self._slide] = self._matrix_representation
                 self._slide += 1
 
     def probability(self, energy):
@@ -114,7 +114,7 @@ class Lattice(object):
 
     def get_matrix_representation(self):
         '''Returns the matrix representation of the lattice'''
-        return self._matrixRepresentation
+        return self._matrix_representation
 
     def get_cooling_history(self):
         '''Returns the cooling history array of the lattice.'''
@@ -126,15 +126,15 @@ class Lattice(object):
 
     def visualize(self):
         '''Visualizes the the lattice as a colour map'''
-        plt.imshow(self._matrixRepresentation, cmap='winter', interpolation='nearest')
+        plt.imshow(self._matrix_representation, cmap='winter', interpolation='nearest')
 
     def visualize_filtered(self):
         '''Visualizes the the lattice as a colour map'''
-        plt.imshow(self.sobel_filter(self._matrixRepresentation), cmap='winter', interpolation='nearest')
+        plt.imshow(self.sobel_filter(self._matrix_representation), cmap='winter', interpolation='nearest')
 
     def __repr__(self):
         '''Returns a string representation of the lattice'''
-        return str(self._matrixRepresentation)
+        return str(self._matrix_representation)
 
     def temperature(self):
         '''returns the temperature'''

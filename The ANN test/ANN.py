@@ -14,24 +14,28 @@ import h5py
 class ConvNet(nn.Module):
 
     # Image starts at 128x128 for this test.
-    def __init__(self, input_channels=5, output_dim=9, channels1=10, channels2=20, h1=128, h2=64):
+    def __init__(self, input_channels=5, output_dim=9, channels1=10, channels2=20, h1=200, h2=128, h3=64):
         super(ConvNet, self).__init__()
+        self._final = channels2
+
         self.conv1 = nn.Conv2d(input_channels, channels1, kernel_size=5, stride=1)
         self.conv2 = nn.Conv2d(channels1, channels2, kernel_size=5, stride=1)
-        self.fc1 = nn.Linear(channels2*7*7, h1)
+        # self.conv3 = nn.Conv2d(channels2, self._final, kernel_size=3, stride=1)
+        self.fc1 = nn.Linear(self._final*7*7, h1)
         self.fc2 = nn.Linear(h1, h2)
         self.fc3 = nn.Linear(h2, output_dim)
 
-        self.sigmoid = nn.Sigmoid
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         # Pooling halves size. Convolution div by 2 and remove 3. After layer: Nx10x18x18.
         x = F.relu(F.max_pool2d(self.conv2(x), 2))
         # Not sure that pooling is necessarily a good idea after convolutions. Size: Nx20x7x7
-        x = x.view(-1, 15*7*7)
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        # x = F.relu(self.conv3(x))
+        x = x.view(-1, self._final*7*7)
+        x = self.sigmoid(self.fc1(x))
+        x = self.sigmoid(self.fc2(x))
         x = self.fc3(x)
         x = x.view(-1, 3, 3)
         return x
@@ -72,9 +76,9 @@ if __name__ == "__main__":
 
     # Define the batch size and number of epochs for training.
     batch_size = 15
-    max_epoch = 30
+    max_epoch = 50
 
-    model = ConvNet(channels1=9, channels2=15, h1=256, h2=64)  # Define the size of the layers, easy to tweak.
+    model = ConvNet(channels1=5, channels2=10, h1=200, h2=128)  # Define the size of the layers, easy to tweak.
     model.training = True
 
     file = h5py.File("cooling_history.hdf5", "r")  # Load all the data from the file and organize it into sets.
@@ -103,7 +107,7 @@ if __name__ == "__main__":
     # These next lines let you visualize one example from the test set. Change the testindex to get a different sample.
     f, ax = plt.subplots(1, 5)
 
-    testindex = 47
+    testindex = 25
     for i in range(5):
         ax[i].imshow(testset[testindex, i], cmap='winter')
 
@@ -131,7 +135,7 @@ def eval_conv():
         total += criterion(output.squeeze(0), test_targets[image])
 
     average_loss = total / testset.shape[0]
-    print("Average Loss: ", average_loss.item())
+    print("Average Test Loss: ", average_loss.item())
 
 
 eval_conv()
