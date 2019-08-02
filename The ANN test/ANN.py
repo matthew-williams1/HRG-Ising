@@ -14,18 +14,24 @@ import h5py
 class ConvNet(nn.Module):
 
     # Image starts at 128x128 for this test.
-    def __init__(self, input_channels=5, output_dim=9, channels1=10, channels2=20, h1=200, h2=128, h3=64):
+    def __init__(self, input_channels=5, output_dim=9, channels1=10, channels2=20, h1=200, h2=128, h3=64, input_shape=40):
         super(ConvNet, self).__init__()
         self._final = channels2
+
+        self._size1 = self.convolution_dimensions(input_shape, kernel_size=5)
+        self._size2 = self.convolution_dimensions(self._size1, kernel_size=5)
 
         self.conv1 = nn.Conv2d(input_channels, channels1, kernel_size=5, stride=1)
         self.conv2 = nn.Conv2d(channels1, channels2, kernel_size=5, stride=1)
         # self.conv3 = nn.Conv2d(channels2, self._final, kernel_size=3, stride=1)
-        self.fc1 = nn.Linear(self._final*7*7, h1)
+        self.fc1 = nn.Linear(self._final*self._size2*self._size2, h1)
         self.fc2 = nn.Linear(h1, h2)
         self.fc3 = nn.Linear(h2, output_dim)
 
         self.sigmoid = nn.Sigmoid()
+
+    def convolution_dimensions(self, h_in, kernel_size, pool_size=2, stride=1, padding=0, dilation=1):
+        return int(((h_in + (2 * padding) - dilation * (kernel_size - 1) - 1) / stride + 1) / pool_size)
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
@@ -33,7 +39,7 @@ class ConvNet(nn.Module):
         x = F.relu(F.max_pool2d(self.conv2(x), 2))
         # Not sure that pooling is necessarily a good idea after convolutions. Size: Nx20x7x7
         # x = F.relu(self.conv3(x))
-        x = x.view(-1, self._final*7*7)
+        x = x.view(-1, self._final*x.shape[2]*x.shape[3])
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
@@ -80,6 +86,7 @@ if __name__ == "__main__":
 
     model = ConvNet(channels1=5, channels2=10, h1=128, h2=64)  # Define the size of the layers, easy to tweak.
     model.training = True
+    #print(model.convolution_dimensions(18, 5))
 
     file = h5py.File("cooling_history.hdf5", "r")  # Load all the data from the file and organize it into sets.
 
@@ -97,12 +104,12 @@ if __name__ == "__main__":
 
     # Define the loss function to be used and the optimizer, could try SGD.
     criterion = nn.MSELoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.92)
+    optimizer = optim.SGD(model.parameters(), lr=0.00001, momentum=0.92)
 
-    model.load("Lattice_test")  # Load the model. You can train the model a bit, then change the learning rate
+    model.load("models/Lattice_test")  # Load the model. You can train the model a bit, then change the learning rate
     # and load the model to keep training it but with a different learning rate.
 
-    # train()  # Train the model.
+    train()  # Train the model.
 
     # These next lines let you visualize one example from the test set. Change the testindex to get a different sample.
     f, ax = plt.subplots(1, 5)
@@ -140,4 +147,4 @@ def eval_conv():
 
 eval_conv()
 
-model.save("Lattice_test")
+model.save("models/Lattice_test")
