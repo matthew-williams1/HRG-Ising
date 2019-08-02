@@ -34,8 +34,8 @@ class ConvNet(nn.Module):
         # Not sure that pooling is necessarily a good idea after convolutions. Size: Nx20x7x7
         # x = F.relu(self.conv3(x))
         x = x.view(-1, self._final*7*7)
-        x = self.sigmoid(self.fc1(x))
-        x = self.sigmoid(self.fc2(x))
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
         x = self.fc3(x)
         x = x.view(-1, 3, 3)
         return x
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     batch_size = 15
     max_epoch = 50
 
-    model = ConvNet(channels1=5, channels2=10, h1=200, h2=128)  # Define the size of the layers, easy to tweak.
+    model = ConvNet(channels1=5, channels2=10, h1=128, h2=64)  # Define the size of the layers, easy to tweak.
     model.training = True
 
     file = h5py.File("cooling_history.hdf5", "r")  # Load all the data from the file and organize it into sets.
@@ -97,17 +97,17 @@ if __name__ == "__main__":
 
     # Define the loss function to be used and the optimizer, could try SGD.
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.0001)
+    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.92)
 
     model.load("Lattice_test")  # Load the model. You can train the model a bit, then change the learning rate
     # and load the model to keep training it but with a different learning rate.
 
-    train()  # Train the model.
+    # train()  # Train the model.
 
     # These next lines let you visualize one example from the test set. Change the testindex to get a different sample.
     f, ax = plt.subplots(1, 5)
 
-    testindex = 25
+    testindex = 43
     for i in range(5):
         ax[i].imshow(testset[testindex, i], cmap='winter')
 

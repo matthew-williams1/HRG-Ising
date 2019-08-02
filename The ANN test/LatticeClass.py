@@ -16,13 +16,14 @@ class Lattice(object):
         self._temperature = temperature
         self._savePeriod = 1
         self._matrix_representation = np.rint(np.random.choice([-1, 1], size=(height, width)))
-        self._field, self._answer = self.make_field()
+        self._field = np.zeros((width, height))  # self.make_field()
         self._history = np.zeros((5, width, height))
         self._energy = self.energy_calculation(self._matrix_representation)
         self._slide = 0
 
     def make_field(self):
         '''Returns a field matrix with two uniform halves'''
+        '''
         occupied = np.random.randn(3, 3)  # Define 3x3 array with random values from a normal dist. for the
         # magnetic field. Serves also as the answer for the neural network.
 
@@ -35,12 +36,18 @@ class Lattice(object):
         for i in range(occupied.shape[0]):
             for j in range(occupied.shape[1]):
                 if occupied[i, j] > 0.3:
-                    occupied[i, j] *= np.random.uniform(2, 6)
+                    occupied[i, j] *= 100
                     for row in range(i*block_width, (i+1)*block_width + 1):
                         for col in range(j*block_width, (j+1)*block_width+1):
                             field[row, col] = occupied[i, j]
+        '''
+        field = np.ones((self._width, self._height))
+        block_width = int(self._width / 3) - 1
+        for row in range(block_width + 1):
+            for col in range(block_width + 1):
+                field[row, col] = 5
 
-        return field, occupied
+        return field
 
     def energy_calculation(self, lattice):
         '''Calculates the total energy of the lattice'''
@@ -59,29 +66,25 @@ class Lattice(object):
 
     def energy_at_a_point(self, i, j):
         '''Calculates the energy at a given point'''
-        return -(self._matrix_representation[i][j] * (self._matrix_representation[(i-1) % self._width][j % self._width]
-                                            + self._matrix_representation[(i+1) % self._width][j % self._width]
-                                            + self._matrix_representation[i % self._width][(j-1) % self._width]
-                                            + self._matrix_representation[i % self._width][(j+1) % self._width]
-                                            + a * (self._matrix_representation[(i-1) % self._width][(j-1) % self._width]
-                                            + self._matrix_representation[(i+1) % self._width][(j-1) % self._width]
-                                            + self._matrix_representation[(i+1) % self._width][(j+1) % self._width]
-                                            + self._matrix_representation[(i-1) % self._width][(j+1) % self._width])) / 2
-                                            - self._field[i][j])
+        indices_x = np.array([(i-1) % self._width, (i+1) % self._width, i % self._width, i % self._width])
+
+        indices_y = np.array([j % self._width, j % self._width, (j-1) % self._width, (j+1) % self._width])
+
+        return -(2 * self._matrix_representation[i][j] * (np.sum(self._matrix_representation[indices_x, indices_y]) / 2
+                                                      + self._field[i][j]))
 
     def monte_carlo(self, steps):
         '''Performs Monte Carlo algorithm'''
         for x in range(steps):
             for i in range(self._width):
                 for j in range(self._height):
-                    r = random.uniform(0,1)
-                    energy1 = self.energy_at_a_point(i,j)
+                    r = random.uniform(0, 1)
+                    energy_delta = self.energy_at_a_point(i, j)
                     self._matrix_representation[i][j] *= -1
-                    energy2 = self.energy_at_a_point(i,j)
 
-                    prob = self.probability((energy1-energy2) * self._field[i , j])
+                    prob = self.probability(energy_delta)
 
-                    if r > min(1, prob):
+                    if r > prob:
                         self._matrix_representation[i][j] *= -1
 
             if self._temperature > 0.1:
@@ -93,7 +96,7 @@ class Lattice(object):
 
     def probability(self, energy):
         '''Calculates the probability given an energy'''
-        return np.exp(-energy/self._temperature)
+        return 1 / (1 + np.exp(energy/self._temperature))
 
     def sobel_filter(self, source_image):
         '''Convolves the lattice'''
@@ -124,13 +127,12 @@ class Lattice(object):
         '''Returns the magnetic field of the lattice.'''
         return self._field
 
-    def visualize(self):
+    def visualize(self, filtered=False):
         '''Visualizes the the lattice as a colour map'''
-        plt.imshow(self._matrix_representation, cmap='winter', interpolation='nearest')
-
-    def visualize_filtered(self):
-        '''Visualizes the the lattice as a colour map'''
-        plt.imshow(self.sobel_filter(self._matrix_representation), cmap='winter', interpolation='nearest')
+        if not filtered:
+            plt.imshow(self._matrix_representation, cmap='winter', interpolation='nearest')
+        else:
+            plt.imshow(self.sobel_filter(self._matrix_representation), cmap='winter', interpolation='nearest')
 
     def __repr__(self):
         '''Returns a string representation of the lattice'''
