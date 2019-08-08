@@ -37,8 +37,8 @@ class Lattice(object):
             for j in range(occupied.shape[1]):
                 if occupied[i, j] > 0.3:
                     occupied[i, j] *= 100
-                    for row in range(i*block_width, (i+1)*block_width + 1):
-                        for col in range(j*block_width, (j+1)*block_width+1):
+                    for row in range(i*block_width, (i+1)*block_width):
+                        for col in range(j*block_width, (j+1)*block_width):
                             field[row, col] = occupied[i, j]
         '''
         field = np.ones((self._width, self._height))
