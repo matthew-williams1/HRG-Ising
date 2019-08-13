@@ -9,18 +9,18 @@ file = h5py.File("Lattice.hdf5", "w")  # Initialize a file object to save the co
 a = 0
 width = 100
 height = 100
-temperature = 6  # Temperature is in Kelvin
+temperature = 12  # Temperature is in Kelvin
 
 fig = plt.figure()
 fig.clear()
 
 
 def animate(i):
+    fig.clear()
     lattice.monte_carlo(1)
     temperature_string = "Temperature: " + str(lattice._temperature)
     fig.suptitle(temperature_string)
-    lattice.visualize(filtered=False)
-
+    lattice.visualize(filtered=True)
 
 lattice = Lattice(width, height, temperature)
 

@@ -21,25 +21,29 @@ class Lattice(object):
         self._energy = self.energy_calculation()
         self._slide = 0
 
+        self._running_sum = scipy.signal.convolve2d(self._matrix_representation, np.array([[0,1,0],[1,0,1],[0,1,0]]), mode='same', boundary='fill') * self._matrix_representation
+        self._iterations = 1
+
     def make_field(self):
         """Returns a field matrix with two uniform halves"""
-        occupied = np.random.randn(2, 2)  # Define 3x3 array with random values from a normal dist. for the
+        occupied = np.array([[3,0,2.5],[4,0,-4],[0,0,1]])#np.random.randn(3, 3)  # Define 3x3 array with random values from a normal dist. for the
         # magnetic field. Serves also as the answer for the neural network.
 
         field = np.ones((self._width, self._height))  # actual field which will be filled with numbers.
 
-        block_width = int(self._width / 2) - 1
+        block_width = int(self._width / 3) - 1
 
         # Fill the field with values. If the square from the 3x3 has a value >0.3, then it will be active and the value
         # will be increased.
         for i in range(occupied.shape[0]):
             for j in range(occupied.shape[1]):
                 if occupied[i, j] > 0.3:
-                    occupied[i, j] *= 20
+                    occupied[i, j] *= 3
                     for row in range(i*block_width, (i+1)*block_width):
                         for col in range(j*block_width, (j+1)*block_width):
                             field[row, col] = occupied[i, j]
-        print(field)
+
+        #print(field)
         return field
 
     def energy_calculation(self):
@@ -87,7 +91,6 @@ class Lattice(object):
                     self._history[self._slide] = self._matrix_representation
                 self._slide += 1
         self._energy = self.energy_calculation()
-        print(self.organization())
 
     def probability(self, energy):
         """Calculates the probability given an energy"""
@@ -95,8 +98,9 @@ class Lattice(object):
 
     def sobel_filter(self, source_image):
         """Convolves the lattice"""
-        kernel = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
-        return scipy.signal.convolve2d(kernel, source_image, boundary='fill')
+        kernel = np.array([[0,1,0],[1,0,1],[0,1,0]])
+        self._running_sum += scipy.signal.convolve2d(source_image, kernel, mode='same', boundary='fill') * self._matrix_representation
+        return self._running_sum/self._iterations
 
     def organization(self):
         max_energy = 2 * self._width * self._height - np.sum(self._field*self._matrix_representation)
@@ -129,10 +133,11 @@ class Lattice(object):
 
     def visualize(self, filtered=False):
         """Visualizes the the lattice as a colour map"""
+
         if not filtered:
             plt.imshow(self._matrix_representation, cmap='winter', interpolation='nearest')
         else:
-            plt.imshow(self.sobel_filter(self._matrix_representation), cmap='winter', interpolation='nearest')
+            plt.imshow(self.sobel_filter(self._matrix_representation), cmap='winter', interpolation='None')
 
     def __repr__(self):
         """Returns a string representation of the lattice"""

@@ -8,25 +8,22 @@ import matplotlib
 import matplotlib.pyplot as plt
 import os
 import pickle
+import pandas as pd
 import h5py
 
 
 class ConvNet(nn.Module):
 
     # Image starts at 128x128 for this test.
-    def __init__(self, input_channels=5, output_dim=9, channels1=10, channels2=20, h1=200, h2=128, h3=64, input_shape=40):
+    def __init__(self, input_channels=15, output_dim=1, channels1=30, channels2=60, h1=200, h2=128, h3=64,
+                 input_shape=40):
         super(ConvNet, self).__init__()
         self._final = channels2
 
+        self.conv = nn.Conv2d(input_channels, output_dim, kernel_size=5, stride=1)
+
         self._size1 = self.convolution_dimensions(input_shape, kernel_size=5)
         self._size2 = self.convolution_dimensions(self._size1, kernel_size=5)
-
-        self.conv1 = nn.Conv2d(input_channels, channels1, kernel_size=5, stride=1)
-        self.conv2 = nn.Conv2d(channels1, channels2, kernel_size=5, stride=1)
-        # self.conv3 = nn.Conv2d(channels2, self._final, kernel_size=3, stride=1)
-        self.fc1 = nn.Linear(self._final*self._size2*self._size2, h1)
-        self.fc2 = nn.Linear(h1, h2)
-        self.fc3 = nn.Linear(h2, output_dim)
 
         self.sigmoid = nn.Sigmoid()
 
@@ -34,17 +31,7 @@ class ConvNet(nn.Module):
         return int(((h_in + (2 * padding) - dilation * (kernel_size - 1) - 1) / stride + 1) / pool_size)
 
     def forward(self, x):
-        x = F.relu(F.max_pool2d(self.conv1(x), 2))
-        # Pooling halves size. Convolution div by 2 and remove 3. After layer: Nx10x18x18.
-        x = F.relu(F.max_pool2d(self.conv2(x), 2))
-        # Not sure that pooling is necessarily a good idea after convolutions. Size: Nx20x7x7
-        # x = F.relu(self.conv3(x))
-        x = x.view(-1, self._final*x.shape[2]*x.shape[3])
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        x = x.view(-1, 3, 3)
-        return x
+
 
     def save(self, filename):
         to_save = self.state_dict()
@@ -57,8 +44,7 @@ class ConvNet(nn.Module):
 
 def train():
     # function called to train the neural network.
-    for iteration in range(0, int(max_epoch*data.shape[0]/batch_size)):
-
+    for iteration in range(0, int(max_epoch * data.shape[0] / batch_size)):
         optimizer.zero_grad()
 
         indices = t.randperm(data.shape[0])[:batch_size]
@@ -83,23 +69,32 @@ if __name__ == "__main__":
     # Define the batch size and number of epochs for training.
     batch_size = 15
     max_epoch = 50
+    size = 40
+    num_data = 1000
 
-    model = ConvNet(channels1=5, channels2=10, h1=128, h2=64)  # Define the size of the layers, easy to tweak.
+    columns = list(np.arange(0, size))
+
+    model = ConvNet(channels1=15, channels2=30, h1=128, h2=64)  # Define the size of the layers, easy to tweak.
     model.training = True
-    #print(model.convolution_dimensions(18, 5))
+    # print(model.convolution_dimensions(18, 5))
 
-    file = h5py.File("cooling_history.hdf5", "r")  # Load all the data from the file and organize it into sets.
+    # file = h5py.File("cooling_history.hdf5", "r")  # Load all the data from the file and organize it into sets.
 
-    dataset = file["data"]
+    dataset = pd.read_csv("/Users/nicholasd./Desktop/git/wip/HRG-Ising/The ANN Test/data/Archive/coolingHistory.csv",
+                          usecols=columns, header=None).to_numpy().reshape((num_data, 15, size, size))
     data = t.from_numpy(np.asarray(dataset[()], dtype=np.float32))
 
-    targets = file["targets"]
+    targets = pd.read_csv("/Users/nicholasd./Desktop/git/wip/HRG-Ising/The ANN Test/data/Archive/magField.csv",
+                          usecols=columns, header=None).to_numpy().reshape(num_data, size, size)[:,0,0]
     targets = t.from_numpy(np.asarray(targets[()], dtype=np.float32))
 
-    testset = file["test_data"]
+    testset = pd.read_csv("/Users/nicholasd./Desktop/git/wip/HRG-Ising/The ANN Test/data/Archive/TestData.csv",
+                          usecols=columns, header=None).to_numpy().reshape((int(0.2 * num_data), 15, size, size))
     testset = t.from_numpy(np.asarray(testset[()], dtype=np.float32))
 
-    test_targets = file["test_targets"]
+    test_targets = pd.read_csv("/Users/nicholasd./Desktop/git/wip/HRG-Ising/The ANN Test/data/Archive/TestFields.csv",
+                               usecols=columns, header=None).to_numpy().reshape((int(0.2 * num_data), size, size))[:,0,0]
+
     test_targets = t.from_numpy(np.asarray(test_targets[()], dtype=np.float32))
 
     # Define the loss function to be used and the optimizer, could try SGD.
