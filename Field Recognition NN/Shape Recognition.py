@@ -124,6 +124,10 @@ if __name__ == '__main__':
     validate_loss = []
 
     if True:
+        record = np.inf
+        increase_count = 0
+        increase_threshold = 6
+        
         for iteration in range(int(max_epochs * 1000 / BATCH_SIZE)):
 
             if iteration - int(iteration) < 0.001:
@@ -153,12 +157,22 @@ if __name__ == '__main__':
             val_loss_strength = criterion2(prediction[1], val_strengths)
             val_loss = val_loss_shape + val_loss_strength
             validate_loss.append(val_loss)
+            
+            if record > val_loss:
+                record = val_loss
+                model.save("models/Recognition")
+
+            if len(validate_loss) > 1 and val_loss < validate_loss[-2]:
+                increase_count = 0
+            else:
+                increase_count += 1
 
             epochs.append(iteration * BATCH_SIZE / 1000)
             print("Epoch %.3f/%i; Train loss: %.3f; Validation loss: %.3f."
               % (iteration * BATCH_SIZE / 1000, max_epochs, train_loss.item(), val_loss.item()))
 
-    model.save("Recognition")
+            if increase_count >= increase_threshold:
+                break
 
     plt.plot(epochs, training_loss)
     plt.plot(epochs, validate_loss)
