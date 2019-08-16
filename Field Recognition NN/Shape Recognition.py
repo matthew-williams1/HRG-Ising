@@ -108,28 +108,27 @@ class ConvNet(nn.Module):
 if __name__ == '__main__':
 
     # Set the parameters for training.
-    max_epochs = 3
+    max_epochs = 5
 
     model = ConvNet(in_features=15, h1=500, h2=250)
 
     criterion1 = nn.MSELoss(reduction='mean')
     criterion2 = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.000001)
+    optimizer = optim.Adam(model.parameters(), lr=0.00005)
 
-    model.load("Recognition")  # Load the model. You can train the model a bit, then change the learning rate
+    model.load("models/Recognition")  # Load the model. You can train the model a bit, then change the learning rate
     # and load the model to keep training it but with a different learning rate.
 
     epochs = []
     training_loss = []
     validate_loss = []
 
-    if True:
+    if False:
         record = np.inf
         increase_count = 0
         increase_threshold = 6
-        
-        for iteration in range(int(max_epochs * 1000 / BATCH_SIZE)):
 
+        for iteration in range(int(max_epochs * 1000 / BATCH_SIZE)):
             if iteration - int(iteration) < 0.001:
                 shuffled = t.randperm(num_data)
 
@@ -145,7 +144,7 @@ if __name__ == '__main__':
             train_loss_shape = criterion1(prediction[0], label[0])
             train_loss_strength = criterion2(prediction[1], label[1])
             train_loss = train_loss_shape + train_loss_strength
-            training_loss.append(train_loss)
+            training_loss.append(train_loss.item())
 
             optimizer.zero_grad()
             train_loss.backward()
@@ -156,10 +155,10 @@ if __name__ == '__main__':
             val_loss_shape = criterion1(prediction[0], val_targets)
             val_loss_strength = criterion2(prediction[1], val_strengths)
             val_loss = val_loss_shape + val_loss_strength
-            validate_loss.append(val_loss)
-            
-            if record > val_loss:
-                record = val_loss
+            validate_loss.append(val_loss.item())
+
+            if record > val_loss.item():
+                record = val_loss.item()
                 model.save("models/Recognition")
 
             if len(validate_loss) > 1 and val_loss < validate_loss[-2]:
@@ -202,7 +201,6 @@ if __name__ == '__main__':
     plt.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
     cax = plt.axes([0.85, 0.1, 0.075, 0.8])
     plt.colorbar(cax=cax)
-    plt.show()
 
     print("Actual Magnitude: %.3f, Predicted Magnitude: %.3f."% (val_strengths[index].item(), out[1].item()))
 
