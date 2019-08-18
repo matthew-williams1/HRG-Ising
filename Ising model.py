@@ -34,6 +34,7 @@ plt.show()
 plt.imshow((lattice.get_running_sum() - np.amin(lattice.get_running_sum())) /
            (np.amax(lattice.get_running_sum()) - np.amin(lattice.get_running_sum())),
            cmap='winter', interpolation='None')
+print(lattice.mse())
 plt.show()
 
 
