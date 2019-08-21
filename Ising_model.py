@@ -1,4 +1,4 @@
-from LatticeClass import Lattice # Imports the Lattice class
+from Lattice_Class import Lattice # Imports the Lattice class
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.animation as anim
