@@ -7,6 +7,7 @@ from torch.autograd import Variable
 import matplotlib.pyplot as plt
 import pickle
 import pandas as pd
+from matplotlib.ticker import PercentFormatter
 
 '''
 The purpose of this file is only to see if a network can learn
@@ -55,9 +56,9 @@ class ConvNet(nn.Module):
     def __init__(self, in_features=15, h1=300, h2=150):
         super(ConvNet, self).__init__()
 
-        self.conv1 = nn.Conv2d(in_features, 15, kernel_size=3, padding=1, bias=True)
-        self.conv2 = nn.Conv3d(in_channels=1, out_channels=1, kernel_size=3, padding=1)
-        self.conv3 = nn.Conv2d(15, 1, kernel_size=3, padding=1, bias=True)
+        self.conv1 = nn.Conv3d(1, 8, kernel_size=3, padding=1, bias=True)
+        self.conv3 = nn.Conv2d(15*8, 8, kernel_size=3, padding=1, bias=True)
+        self.conv5 = nn.Conv2d(8, 1, kernel_size=3, padding=1, padding_mode='wrap')
 
         self.activation = nn.Tanh()
         self.activation2 = nn.Tanhshrink()
@@ -66,7 +67,9 @@ class ConvNet(nn.Module):
         self.fc2 = nn.Linear(h1, h2)
         self.fc3 = nn.Linear(h2, 1)
 
-        self.pool = nn.AdaptiveAvgPool3d((1, 40, 40))
+        self.fc4 = nn.Linear(64, 1)
+
+        self.pool = nn.AdaptiveAvgPool3d((3, 10, 10))
 
         self.normalize = nn.BatchNorm2d(15)
 
@@ -78,15 +81,21 @@ class ConvNet(nn.Module):
         :return: A tuple which contains a probability field for the location of the magnetic field in the first
         position, and a real number which corresponds to the magnitude as the second number.
         """
-        x = (t.mul(self.conv1(input), input))
-        x = self.activation(self.conv2(x.unsqueeze(1)))
-        x = F.hardtanh(self.conv3(x.squeeze(1)), min_val=0, max_val=1)
+        x = self.activation(self.conv1(input.unsqueeze(1)))
+        x = x.view(-1, 120, 40, 40)
+        x = self.activation(self.conv3(x))
+        #strength = x.view(-1, 8, 40, 40)
+        x = self.conv5(x)
+        x = t.div(x, t.max(x.max(dim=2, keepdim=True)[0], dim=3, keepdim=True)[0])
+        x = F.relu(x)
         x = x.view(-1, 1, 40, 40)
 
-        processed = input * x[:, :, :, :]
-        strength = t.sum(processed, dim=(1, 2, 3)) / t.sum(x, dim=(1, 2, 3))
-        strength = strength.view(-1, 1)
-        strength = self.activation(self.fc1(strength))
+        with t.no_grad():
+            map = x * input
+            sum = t.sum(map, dim=(1, 2, 3)) / t.sum(x, dim=(1, 2, 3))
+            sum = sum.view(-1, 1)
+
+        strength = self.activation(self.fc1(sum))
         strength = self.activation(self.fc2(strength))
         strength = self.fc3(strength)
 
@@ -104,23 +113,22 @@ class ConvNet(nn.Module):
 if __name__ == '__main__':
 
     # Set the parameters for training.
-    max_epochs = 50
+    max_epochs = 20
 
-    model = ConvNet(in_features=15, h1=500, h2=250)
+    model = ConvNet(in_features=15, h1=512, h2=256)
     model = model.cuda()
 
-    criterion1 = nn.MSELoss(reduction='sum')
+    criterion1 = nn.MSELoss(reduction='mean')
     criterion2 = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.002)
-
-    #model.load("Recognition")  # Load the model. You can train the model a bit, then change the learning rate
+    optimizer = optim.Adam(model.parameters(), lr=1e-5)
+    model.load("Recognition3d")  # Load the model. You can train the model a bit, then change the learning rate
     # and load the model to keep training it but with a different learning rate.
 
     epochs = []
     training_loss = []
     validate_loss = []
 
-    if True:
+    if False:
         record = np.inf
         increase_count = 0
         increase_threshold = 6
@@ -141,7 +149,7 @@ if __name__ == '__main__':
             prediction = model(input)
             train_loss_shape = criterion1(prediction[0], label[0])
             train_loss_strength = criterion2(prediction[1], label[1])
-            train_loss = train_loss_shape + train_loss_strength
+            train_loss = train_loss_strength
             training_loss.append(train_loss.item())
 
             optimizer.zero_grad()
@@ -152,12 +160,12 @@ if __name__ == '__main__':
             prediction = model(val_data)
             val_loss_shape = criterion1(prediction[0], val_targets)
             val_loss_strength = criterion2(prediction[1], val_strengths)
-            val_loss = val_loss_shape + val_loss_strength
+            val_loss = val_loss_strength
             validate_loss.append(val_loss.item())
 
             if record > val_loss.item():
                 record = val_loss.item()
-                model.save("Recognition")
+                model.save("Recognition3d")
 
             if len(validate_loss) > 1 and val_loss < validate_loss[-2]:
                 increase_count = 0
@@ -180,6 +188,9 @@ if __name__ == '__main__':
     model = model.eval()
     model = model.cpu()
     index = np.random.randint(0, 200)
+    if np.abs(val_strengths[index].cpu() - 5.166) > 0.001:
+        index = np.random.randint(0, 200)
+
     input = val_data[index].cpu()
     label = val_targets[index].cpu()
 
@@ -190,27 +201,50 @@ if __name__ == '__main__':
             ax[k, i].imshow(input[frame].detach().numpy(), cmap='winter')
             frame += 1
 
+
     plt.show()
 
     out = model(input.unsqueeze(0))
 
     plt.subplot(211)
-    plt.imshow(label.detach().numpy()[0])
+    plt.imshow(label.detach().numpy()[0], cmap='plasma')
     plt.subplot(212)
-    plt.imshow(out[0].detach().numpy()[0, 0])
+    plt.imshow(out[0].detach().numpy()[0, 0], cmap='plasma')
 
     plt.subplots_adjust(bottom=0.1, right=0.8, top=0.9)
     cax = plt.axes([0.85, 0.1, 0.075, 0.8])
     plt.colorbar(cax=cax)
 
-    print("Actual Magnitude: %.3f, Predicted Magnitude: %.3f."% (val_strengths[index].item(), out[1].item()))
+    print("Actual Magnitude: %.3f, Predicted Magnitude: %.3f." % (val_strengths[index].item(), out[1].item()))
 
+    plt.show()
+    out = model(val_data.cpu())[0]
+    xdata = (((t.sum(out * val_data.cpu(), dim=(1, 2, 3)) / t.sum(out, dim=(1, 2, 3))).cpu() / 15) + 1) / 2
+
+    true_data = (((t.sum(val_data * val_targets, dim=(1, 2, 3)) / t.sum(val_targets, dim=(1, 2, 3))).cpu() / 15) + 1)/2
+    plt.plot(xdata.detach().numpy(), val_strengths.cpu().detach().numpy(), 'b.', label='Sum using maps made by NN')
+    plt.plot(true_data.cpu().detach().numpy(), val_strengths.cpu().detach().numpy(), 'g.', label='Sum using answer maps')
+    plt.plot(xdata.detach().numpy(), model(val_data.cpu())[1].detach().numpy(), 'r.', label='Curve made by NN using NN maps')
+    plt.xlabel("Upspin Proportion")
+    plt.ylabel("Field Strength")
+    plt.title("Field strength as a function of up-spin proportion")
+    plt.legend()
     plt.show()
 
     out = model(val_data.cpu())[1].detach().numpy()
+    val_strengths = val_strengths.cpu().detach().numpy()
 
-    error = (val_strengths.cpu().detach().numpy() - out)**2
-    plt.plot(val_strengths.cpu().detach().numpy(), error, 'b.')
-    plt.xlabel("Strength of magnetic field")
-    plt.ylabel("Difference b/w prediction and answer")
+    error = np.abs(val_strengths - out) / val_strengths * 100
+    plt.plot(out, error, 'b.')
+    plt.xlabel("Predicted Magnitude")
+    plt.ylabel("Percent Error (%)")
+    plt.title("Percent Error as a Function of Predicted Output")
     plt.show()
+
+    fig, axs = plt.subplots(1, 1)
+    axs.hist(error, bins=10, range=(0, 50))
+    axs.yaxis.set_major_formatter(PercentFormatter(xmax=error.shape[0]))
+    plt.show()
+
+    np.save("Error.npy", error)
+    np.save("Predictions.npy", out)
