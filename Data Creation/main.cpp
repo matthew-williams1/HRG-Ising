@@ -9,27 +9,24 @@
 #include <math.h>
 #include "Lattice.h"
 
-#define SAVEFOLDER = "/Users/alexbeaudin/Library/Caches/AppCode2019.2/DerivedData/Ising-gztwancwhhgzhcajhscmdygpsunw/Build/Products/Debug"
-
 int main(int argc, const char * argv[]) {
 
 	srand(time(NULL));
 
-	int numData = 1000;
-	unsigned long latticeSize = 40;
+	int numData = 500;
+	unsigned long latticeSize = 128;
 
 	std::vector<double> saveTemps{0.3, 0.65, 1.0, 1.3, 1.65, 2.0, 2.3, 2.65, 3.0, 3.3, 3.65, 4.0, 4.3, 4.65, 5.0};
 	//Set up the files which will store the data.
 
-    std::string data = "/Users/alexbeaudin/Documents/C++/Ising/train/data.csv";
+    std::string data = "/Users/alexbeaudin/CLionProjects/DataMaker/train/data.csv";
     std::ofstream cooling (data);
-    std::string labels = "/Users/alexbeaudin/Documents/C++/Ising/train/labels.csv";
+    std::string labels = "/Users/alexbeaudin/CLionProjects/DataMaker/train/labels.csv";
     std::ofstream field (labels);
 
 	for (int k = 0; k < numData; k++) {
 
 		Lattice lattice(latticeSize, 5.0, saveTemps, true);
-
 
 		while (lattice.getTemperature() > 0.03)
 		{
@@ -43,9 +40,9 @@ int main(int argc, const char * argv[]) {
 		lattice.saveField(field);
 	}
 
-    std::string valData = "/Users/alexbeaudin/Documents/C++/Ising/validate/data.csv";
+    std::string valData = "/Users/alexbeaudin/CLionProjects/DataMaker/validate/data.csv";
     std::ofstream valCooling (valData);
-    std::string valLabels = "/Users/alexbeaudin/Documents/C++/Ising/validate/labels.csv";
+    std::string valLabels = "/Users/alexbeaudin/CLionProjects/DataMaker/validate/labels.csv";
     std::ofstream valField (valLabels);
 
 	for (int k = 0; k < 0.2 * numData; k++) {
