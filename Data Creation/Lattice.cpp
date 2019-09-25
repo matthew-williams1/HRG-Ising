@@ -10,9 +10,9 @@ std::vector<std::vector <float>> Lattice::makeField(unsigned long dimensions, bo
     //Initialize the value which the magnetic field will have.
     float strength;
     if (constantStrength)
-        strength = 9.0 * (float) rand() / RAND_MAX + 1.0;
+        strength = 5.0 * (float) rand() / RAND_MAX;
     else
-        strength = 9.0 * (float) rand() / RAND_MAX + 1.0;
+        strength = 5.0 * (float) rand() / RAND_MAX;
 
     std::vector <float> temp(dimensions, 0);
     std::vector <std::vector <float>> field(dimensions, temp); //The field which will be filled with values.

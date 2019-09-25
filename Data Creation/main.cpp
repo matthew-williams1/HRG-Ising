@@ -14,7 +14,7 @@ int main(int argc, const char * argv[]) {
 	srand(time(NULL));
 
 	int numData = 500;
-	unsigned long latticeSize = 128;
+	unsigned long latticeSize = 64;
 
 	std::vector<double> saveTemps{0.3, 0.65, 1.0, 1.3, 1.65, 2.0, 2.3, 2.65, 3.0, 3.3, 3.65, 4.0, 4.3, 4.65, 5.0};
 	//Set up the files which will store the data.
